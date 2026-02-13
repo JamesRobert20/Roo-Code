@@ -58,6 +58,7 @@ vitest.mock("../../transform/ai-sdk", () => ({
 
 // Import mocked modules
 import { convertToolsForAiSdk, mapToolChoice } from "../../transform/ai-sdk"
+import { sanitizeMessagesForProvider } from "../../transform/sanitize-messages"
 import { Anthropic } from "@anthropic-ai/sdk"
 
 // Helper: create a mock provider function
@@ -400,6 +401,12 @@ describe("AnthropicHandler", () => {
 		})
 
 		it("should strip reasoning_details and reasoning_content from messages before sending to API", async () => {
+			// Override the identity mock with the real implementation for this test
+			const { sanitizeMessagesForProvider: realSanitize } = await vi.importActual<
+				typeof import("../../transform/sanitize-messages")
+			>("../../transform/sanitize-messages")
+			vi.mocked(sanitizeMessagesForProvider).mockImplementation(realSanitize)
+
 			setupStreamTextMock([{ type: "text-delta", text: "test" }])
 
 			// Simulate messages with extra legacy fields that survive JSON deserialization
